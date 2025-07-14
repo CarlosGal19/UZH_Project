@@ -1,5 +1,7 @@
 import Types "Types";
 import Result "mo:base/Result";
+import Array "mo:base/Array";
+import Mocks "Mocks";
 
 module {
 
@@ -38,4 +40,57 @@ module {
 
         return #ok;
     };
+
+    public func getCrimes() : Result.Result<[Types.CrimeResponse], Text> {
+        if (Mocks.commonCrimes.size() == 0) return #err("There is not crimes");
+        let crimes : [Types.CrimeResponse] = Array.map<Types.CrimeWithSubtypes, Types.CrimeResponse>(
+            Mocks.commonCrimes,
+            func(c : Types.CrimeWithSubtypes) : Types.CrimeResponse {
+                {
+                    crime = c.crimeType;
+                };
+            },
+        );
+        return #ok(crimes);
+    };
+
+    public func getCrimeSubtypes(crime : Text) : Result.Result<[Types.CrimeSubtypeResponse], Text> {
+        if (crime == "") {
+            return #err("Crime is required");
+        };
+
+        let maybeCrime = Array.find<Types.CrimeWithSubtypes>(
+            Mocks.commonCrimes,
+            func(c) { c.crimeType == crime },
+        );
+
+        switch (maybeCrime) {
+            case (null) return #err("Crime not found");
+            case (?crimeData) {
+                let subtypes = Array.map<Text, Types.CrimeSubtypeResponse>(
+                    crimeData.subtypes,
+                    func(s) {
+                        { subtype = s };
+                    },
+                );
+                return #ok(subtypes);
+            };
+        };
+    };
+
+    public func getAffectedLegalInterests() : Result.Result<[Types.AffectedLegalInterestsResponse], Text> {
+        if (Mocks.affectedLegalInterests.size() == 0) {
+            return #err("There is no affected legal interests");
+        };
+
+        let interests : [Types.AffectedLegalInterestsResponse] = Array.map<Text, Types.AffectedLegalInterestsResponse>(
+            Mocks.affectedLegalInterests,
+            func(name : Text) : Types.AffectedLegalInterestsResponse {
+                { name = name };
+            },
+        );
+
+        return #ok(interests);
+    };
+
 };
