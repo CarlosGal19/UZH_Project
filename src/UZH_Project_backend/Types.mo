@@ -1,11 +1,13 @@
 import Nat32 "mo:base/Nat32";
+import Int "mo:base/Int";
+
 module {
 
-  public type nft = {
+  public type Nft = {
     hash: Nat32;
     status: Text;
-    created_at: Text;
-    updated_at: Text;
+    created_at: Int;
+    updated_at: Int;
   };
 
   public type CrimeWithSubtypes = {
@@ -58,6 +60,10 @@ module {
     subtype : Text;
   };
 
+  public type StatusResponse = {
+    name : Text;
+  };
+
   public type AffectedLegalInterestsResponse = {
     name : Text;
   };
@@ -80,5 +86,10 @@ module {
   public type AffectedLegalInterestsResult = {
     #ok : AffectedLegalInterestsResponse;
     #err: Text;
-  }
+  };
+
+  public type StatusResult = {
+    #ok : StatusResponse;
+    #err : Text;
+  };
 }

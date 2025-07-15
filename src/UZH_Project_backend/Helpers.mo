@@ -42,7 +42,7 @@ module {
     };
 
     public func getCrimes() : Result.Result<[Types.CrimeResponse], Text> {
-        if (Mocks.commonCrimes.size() == 0) return #err("There is not crimes");
+        if (Mocks.commonCrimes.size() == 0) return #err("There are not crimes");
         let crimes : [Types.CrimeResponse] = Array.map<Types.CrimeWithSubtypes, Types.CrimeResponse>(
             Mocks.commonCrimes,
             func(c : Types.CrimeWithSubtypes) : Types.CrimeResponse {
@@ -52,6 +52,19 @@ module {
             },
         );
         return #ok(crimes);
+    };
+
+    public func getStatus() : Result.Result<[Types.StatusResponse], Text> {
+        if (Mocks.status.size() == 0) return #err("There are not status");
+        let status : [Types.StatusResponse] = Array.map<Text, Types.StatusResponse>(
+            Mocks.status,
+            func(s: Text) : Types.StatusResponse {
+                {
+                    name = s
+                };
+            }
+        );
+        return #ok(status);
     };
 
     public func getCrimeSubtypes(crime : Text) : Result.Result<[Types.CrimeSubtypeResponse], Text> {
