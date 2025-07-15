@@ -2,6 +2,7 @@ import Types "Types";
 import Result "mo:base/Result";
 import Array "mo:base/Array";
 import Mocks "Mocks";
+import Time "mo:base/Time";
 
 module {
 
@@ -58,11 +59,11 @@ module {
         if (Mocks.status.size() == 0) return #err("There are not status");
         let status : [Types.StatusResponse] = Array.map<Text, Types.StatusResponse>(
             Mocks.status,
-            func(s: Text) : Types.StatusResponse {
+            func(s : Text) : Types.StatusResponse {
                 {
-                    name = s
+                    name = s;
                 };
-            }
+            },
         );
         return #ok(status);
     };
@@ -104,6 +105,27 @@ module {
         );
 
         return #ok(interests);
+    };
+
+    public func getCurrentTimestamp() : Int {
+        return Time.now();
+    };
+
+    public func findNft(nfts : [Types.Nft], hash : Nat32) : Result.Result<Types.Nft, Text> {
+        if (hash == 0) {
+            return #err("The report id is necessary");
+        };
+
+        let foundNft = Array.find<Types.Nft>(nfts, func(nft) = nft.hash == hash);
+
+        switch (foundNft) {
+            case null {
+                #err("Report not found");
+            };
+            case (?nft) {
+                #ok(nft);
+            };
+        };
     };
 
 };

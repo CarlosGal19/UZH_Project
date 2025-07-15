@@ -3,7 +3,6 @@ import Helpers "Helpers";
 import Array "mo:base/Array";
 import Nat32 "mo:base/Nat32";
 import Result "mo:base/Result";
-import Time "mo:base/Time";
 import Principal "mo:base/Principal";
 
 actor {
@@ -24,14 +23,14 @@ actor {
   public func updateStatus(nft_hash : Nat32, status : Text) : async Result.Result<Types.Nft, Text> {
     if (status == "") return #err("The new status is required");
 
-    switch (findNft(nft_hash)) {
-      case (#ok(report)) {
+    switch (Helpers.findNft(nfts, nft_hash)) {
+      case (#ok(nft)) {
         // Create a new NFT object with updated status
         let updatedNft : Types.Nft = {
-          hash = report.hash;
+          hash = nft.hash;
           status = status;
-          created_at = report.created_at;
-          updated_at = getCurrentTimestamp();
+          created_at = nft.created_at;
+          updated_at = Helpers.getCurrentTimestamp();
         };
 
         // Update the array by replacing the NFT with matching hash
@@ -116,27 +115,6 @@ actor {
         return [#err(msg)];
       };
     }
-  };
-
-  private func findNft(hash : Nat32) : Result.Result<Types.Nft, Text> {
-    if (hash == 0) {
-      return #err("The report id is necessary");
-    };
-
-    let foundNft = Array.find<Types.Nft>(nfts, func(nft) = nft.hash == hash);
-
-    switch (foundNft) {
-      case null {
-        #err("Report not found");
-      };
-      case (?nft) {
-        #ok(nft);
-      };
-    };
-  };
-
-  private func getCurrentTimestamp() : Int {
-    return Time.now();
   };
 
 };
