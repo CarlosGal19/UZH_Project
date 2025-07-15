@@ -4,15 +4,42 @@ import Array "mo:base/Array";
 import Nat32 "mo:base/Nat32";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
+import Debug "mo:base/Debug";
 
 actor {
 
+  // Al inicio de tu archivo, después de los imports
+  type NFTCanister = actor {
+    createToken : (Types.Report) -> async Result.Result<Nat, { #InvalidReport }>;
+  };
+
+  // Principal ID del canister NFT (reemplaza con el ID real)
+  let NFT_CANISTER_ID = "uxrrr-q7777-77774-qaaaq-cai";
+  let nftCanister : NFTCanister = actor (NFT_CANISTER_ID);
+
   private stable var nfts : [Types.Nft] = [];
 
-  public shared func addNft(report : Types.Report, _address: Principal) : async Types.ReportResult {
+  public shared func addNft(report : Types.Report, _address : Principal) : async Types.ReportResult {
     switch (Helpers.validateReport(report)) {
       case (#ok) {
-        return #ok(report);
+        try {
+          // Llamar a createToken del otro canister
+          let tokenResult = await nftCanister.createToken(report);
+
+          switch (tokenResult) {
+            case (#ok(tokenId)) {
+              Debug.print("NFT created successfully with ID: " # debug_show (tokenId));
+              return #ok(report);
+            };
+            case (#err(mintError)) {
+              Debug.print("Error creating NFT: " # debug_show (mintError));
+              return #err("Failed to create NFT: " # debug_show (mintError));
+            };
+          };
+        } catch (_) {
+          Debug.print("Inter-canister call failed: ");
+          return #err("Inter-canister call failed");
+        };
       };
       case (#err(msg)) {
         return #err(msg);
@@ -114,7 +141,7 @@ actor {
       case (#err(msg)) {
         return [#err(msg)];
       };
-    }
+    };
   };
 
 };
