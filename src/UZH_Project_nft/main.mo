@@ -12,6 +12,28 @@ import Option "mo:base/Option";
 
 actor ReportNFT {
 
+  // Interfaz para el canister QR
+  type QrOptions = {
+    add_logo : Bool;
+    add_gradient : Bool;
+    add_transparency : ?Bool;
+  };
+
+  type QrImageResult = {
+    image_url : Text;
+    image_data : [Nat8];
+  };
+
+  type QrStorageResult = {
+    #Success : QrImageResult;
+    #Err : { message : Text };
+  };
+
+  // Actor del canister QR (reemplaza con el ID real de tu canister QR)
+  let qrCanister = actor("uxrrr-q7777-77774-qaaaq-cai") : actor {
+    generate_nft_qr_image : (Text) -> async QrStorageResult;
+  };
+
   // DIP-721 Standard Types
   public type TokenId = Nat;
   public type TokenMetadata = {
@@ -72,12 +94,14 @@ actor ReportNFT {
     report : Report;
     createdAt : Int;
     reportHash : Text;
+    qrImageUrl : Text; // Nueva propiedad para la URL del QR
   };
 
   public type MintError = {
     #Unauthorized;
     #InvalidReport;
     #TokenAlreadyExists;
+    #QrGenerationFailed : Text;
   };
 
   // DIP-721 Error Types
@@ -101,7 +125,7 @@ actor ReportNFT {
   private stable var name : Text = "Report NFT Collection";
   private stable var symbol : Text = "RNFT";
   private stable var logo : Text = "https://www.cd.uzh.ch/dam/jcr:56974e80-5fd5-4e6e-ae69-8321e31387a4/uzh-logo.jpg";
-  private stable var description : Text = "Official crime report NFTs";
+  private stable var description : Text = "Official crime report NFTs with QR codes";
   private stable var totalSupply : Nat = 0;
 
   // Dirección fija donde se transferirán todos los tokens
@@ -117,17 +141,22 @@ actor ReportNFT {
     Nat.toText(Nat32.toNat(hash))
   };
 
+  // Helper function to generate report URL for QR code
+  private func generateReportUrl(tokenId : TokenId, reportHash : Text) : Text {
+    let canisterId = Principal.toText(Principal.fromActor(ReportNFT));
+    "https://" # canisterId # ".ic0.app/report/" # Nat.toText(tokenId) # "?hash=" # reportHash
+  };
+
   // Helper function to generate NFT metadata in DIP-721 format
-  private func generateTokenMetadata(report : Report, tokenId : TokenId) : TokenMetadata {
+  private func generateTokenMetadata(report : Report, tokenId : TokenId, qrImageUrl : Text) : TokenMetadata {
     let name = "Report NFT #" # Nat.toText(tokenId);
     let description = "Crime Report: " # report.crimeType # " in " # report.municipality # ", " # report.state;
-    let image = "https://example.com/report-nft-image.png"; // You can generate dynamic images
 
     #NonFungible({
       name = name;
       description = description;
-      image = image;
-      metadata = ?#Text("{\"report_hash\":\"" # generateReportHash(report) # "\",\"crime_type\":\"" # report.crimeType # "\",\"location\":\"" # report.municipality # "\"}");
+      image = qrImageUrl; // Usar la URL del QR generado
+      metadata = ?#Text("{\"report_hash\":\"" # generateReportHash(report) # "\",\"crime_type\":\"" # report.crimeType # "\",\"location\":\"" # report.municipality # "\",\"qr_image\":\"" # qrImageUrl # "\"}");
     })
   };
 
@@ -145,7 +174,7 @@ actor ReportNFT {
     switch (tokens.get(tokenId)) {
       case null { #err(#TokenNotFound) };
       case (?metadata) {
-        #ok(generateTokenMetadata(metadata.report, tokenId))
+        #ok(generateTokenMetadata(metadata.report, tokenId, metadata.qrImageUrl))
       };
     };
   };
@@ -184,21 +213,20 @@ actor ReportNFT {
   public query func dip721_token_uri(tokenId : TokenId) : async Result.Result<Text, TxError> {
     switch (tokens.get(tokenId)) {
       case null { #err(#TokenNotFound) };
-      case (?_) {
-        // Return URL where metadata JSON can be fetched
-        #ok("https://your-domain.com/metadata/" # Nat.toText(tokenId))
+      case (?metadata) {
+        #ok(metadata.qrImageUrl)
       };
     };
   };
 
-  // Check if token exists
+  // Check supported interfaces
   public query func dip721_supported_interfaces() : async [Text] {
     ["DIP721v2"]
   };
 
   // Main Functions
 
-  // Función 1: Crear token NFT real (transferido automáticamente a la dirección fija)
+  // Función principal: Crear token NFT con QR code generado
   public func createToken(report : Report) : async Result.Result<TokenId, MintError> {
     // Validate report
     if (Text.size(report.complainant.firstName) == 0 or
@@ -207,17 +235,30 @@ actor ReportNFT {
       return #err(#InvalidReport);
     };
 
-    // Generate metadata
+    // Generate initial data
     let currentTime = Time.now();
     let tokenId = nextTokenId;
     let reportHash = generateReportHash(report);
+    let reportUrl = generateReportUrl(tokenId, reportHash);
 
+    // Generate QR code using the QR canister
+    let qrResult = await qrCanister.generate_nft_qr_image(reportUrl);
+
+    let qrImageUrl = switch (qrResult) {
+      case (#Success(result)) { result.image_url };
+      case (#Err(error)) {
+        return #err(#QrGenerationFailed(error.message));
+      };
+    };
+
+    // Create NFT metadata with QR image URL
     let metadata : NFTMetadata = {
       tokenId = tokenId;
       owner = RECIPIENT_ADDRESS;
       report = report;
       createdAt = currentTime;
       reportHash = reportHash;
+      qrImageUrl = qrImageUrl;
     };
 
     // Store the NFT
@@ -230,9 +271,25 @@ actor ReportNFT {
     #ok(tokenId)
   };
 
-  // Función 2: Obtener metadatos del token (formato completo)
+  // Función para obtener metadatos del token (formato completo)
   public query func getTokenMetadata(tokenId : TokenId) : async ?NFTMetadata {
     tokens.get(tokenId)
+  };
+
+  // Función para obtener la URL del QR de un token específico
+  public query func getTokenQrUrl(tokenId : TokenId) : async ?Text {
+    switch (tokens.get(tokenId)) {
+      case null { null };
+      case (?metadata) { ?metadata.qrImageUrl };
+    };
+  };
+
+  // Función para obtener detalles del reporte por ID (para el endpoint del QR)
+  public query func getReportDetails(tokenId : TokenId) : async ?Report {
+    switch (tokens.get(tokenId)) {
+      case null { null };
+      case (?metadata) { ?metadata.report };
+    };
   };
 
   // Additional utility functions for DIP-721 compliance
@@ -259,6 +316,7 @@ actor ReportNFT {
           report = metadata.report;
           createdAt = metadata.createdAt;
           reportHash = metadata.reportHash;
+          qrImageUrl = metadata.qrImageUrl;
         };
 
         tokens.put(tokenId, updatedMetadata);
