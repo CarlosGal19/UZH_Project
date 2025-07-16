@@ -5,6 +5,7 @@
   },
   "name": "UZH_Project",
   "scripts": {
+    "dev" : "vite",
     "build": "npm run build --workspaces --if-present",
     "prebuild": "npm run prebuild --workspaces --if-present",
     "pretest": "npm run prebuild --workspaces --if-present",
@@ -14,8 +15,5 @@
   "type": "module",
   "workspaces": [
     "src/UZH_Project_frontend"
-  ],
-  "dependencies": {
-    "react-router-dom": "^7.6.3"
-  }
+  ]
 }

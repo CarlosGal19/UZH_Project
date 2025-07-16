@@ -7,6 +7,7 @@
     "setup": "npm i && dfx canister create UZH_Project_backend && dfx generate UZH_Project_backend && dfx deploy",
     "start": "vite --port 3000",
     "prebuild": "dfx generate",
+    "dev": "vite",
     "build": "tsc && vite build",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\""
   },
