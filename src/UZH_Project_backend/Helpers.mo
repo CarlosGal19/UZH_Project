@@ -2,6 +2,7 @@ import Types "Types";
 import Result "mo:base/Result";
 import Array "mo:base/Array";
 import Mocks "Mocks";
+import Time "mo:base/Time";
 
 module {
 
@@ -42,7 +43,7 @@ module {
     };
 
     public func getCrimes() : Result.Result<[Types.CrimeResponse], Text> {
-        if (Mocks.commonCrimes.size() == 0) return #err("There is not crimes");
+        if (Mocks.commonCrimes.size() == 0) return #err("There are not crimes");
         let crimes : [Types.CrimeResponse] = Array.map<Types.CrimeWithSubtypes, Types.CrimeResponse>(
             Mocks.commonCrimes,
             func(c : Types.CrimeWithSubtypes) : Types.CrimeResponse {
@@ -52,6 +53,19 @@ module {
             },
         );
         return #ok(crimes);
+    };
+
+    public func getStatus() : Result.Result<[Types.StatusResponse], Text> {
+        if (Mocks.status.size() == 0) return #err("There are not status");
+        let status : [Types.StatusResponse] = Array.map<Text, Types.StatusResponse>(
+            Mocks.status,
+            func(s : Text) : Types.StatusResponse {
+                {
+                    name = s;
+                };
+            },
+        );
+        return #ok(status);
     };
 
     public func getCrimeSubtypes(crime : Text) : Result.Result<[Types.CrimeSubtypeResponse], Text> {
@@ -91,6 +105,27 @@ module {
         );
 
         return #ok(interests);
+    };
+
+    public func getCurrentTimestamp() : Int {
+        return Time.now();
+    };
+
+    public func findNft(nfts : [Types.Nft], hash : Nat32) : Result.Result<Types.Nft, Text> {
+        if (hash == 0) {
+            return #err("The report id is necessary");
+        };
+
+        let foundNft = Array.find<Types.Nft>(nfts, func(nft) = nft.hash == hash);
+
+        switch (foundNft) {
+            case null {
+                #err("Report not found");
+            };
+            case (?nft) {
+                #ok(nft);
+            };
+        };
     };
 
 };

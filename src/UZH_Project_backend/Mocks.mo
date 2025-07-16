@@ -37,4 +37,11 @@ module {
         "Public Health",
         "Privacy",
     ];
+
+    public let status : [Text] = [
+        "Pending",
+        "Rejected",
+        "Under revision",
+        "Completed",
+    ];
 };
