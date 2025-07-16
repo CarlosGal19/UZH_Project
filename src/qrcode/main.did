@@ -1,0 +1,77 @@
+type Options = record {
+  add_logo: bool;
+  add_gradient: bool;
+  add_transparency: opt bool;
+};
+
+type QrError = record {
+  message: text;
+};
+
+type QrResult = variant {
+  Image: blob;
+  Err: QrError;
+};
+
+type StoredQrImage = record {
+  id: text;
+  data: blob;
+  created_at: nat64;
+  original_input: text;
+  options: Options;
+  content_type: text;
+};
+
+type QrImageResult = record {
+  image_url: text;
+  image_data: blob;
+};
+
+type QrStorageResult = variant {
+  Success: QrImageResult;
+  Err: QrError;
+};
+
+type QrImageInfo = record {
+  id: text;
+  image_url: text;
+  created_at: nat64;
+  original_input: text;
+  data_size: nat;
+};
+
+type HttpRequest = record {
+  method: text;
+  url: text;
+  headers: vec record { text; text };
+  body: blob;
+};
+
+type HttpResponse = record {
+  status_code: nat16;
+  headers: vec record { text; text };
+  body: blob;
+};
+
+service : {
+  // Funciones originales de compatibilidad
+  "qrcode": (text, Options) -> (QrResult);
+  "qrcode_query": (text, Options) -> (QrResult) query;
+
+  // Nueva función principal: generar QR y almacenar con URL
+  "generate_qr_image": (text, Options) -> (QrStorageResult);
+
+  // Funciones para servir y gestionar imágenes almacenadas
+  "qr_image": (text) -> (opt blob) query;
+  "get_qr_metadata": (text) -> (opt StoredQrImage) query;
+  "get_qr_image_url": (text) -> (opt text) query;
+  "list_qr_images": () -> (vec QrImageInfo) query;
+  "delete_qr_image": (text) -> (bool);
+  "clear_all_qr_images": () -> (nat64);
+
+  // HTTP handler para servir imágenes
+  "http_request": (HttpRequest) -> (HttpResponse) query;
+
+  // Función especial para NFT
+  "generate_nft_qr_image": (text) -> (QrStorageResult);
+};

@@ -14,7 +14,7 @@ actor {
   };
 
   // Principal ID del canister NFT (reemplaza con el ID real)
-  let NFT_CANISTER_ID = "uxrrr-q7777-77774-qaaaq-cai";
+  let NFT_CANISTER_ID = "umunu-kh777-77774-qaaca-cai";
   let nftCanister : NFTCanister = actor (NFT_CANISTER_ID);
 
   private stable var nfts : [Types.Nft] = [];
