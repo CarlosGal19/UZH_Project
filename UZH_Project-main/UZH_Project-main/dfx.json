@@ -9,6 +9,9 @@
       "type": "motoko"
     },
     "UZH_Project_frontend": {
+      "dependencies": [
+        "UZH_Project_backend"
+      ],
       "source": [
         "src/UZH_Project_frontend/dist"
       ],
