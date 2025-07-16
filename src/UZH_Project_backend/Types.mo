@@ -1,10 +1,10 @@
-import Nat32 "mo:base/Nat32";
+import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 
 module {
 
   public type Nft = {
-    hash: Nat32;
+    hash: Nat;
     status: Text;
     created_at: Int;
     updated_at: Int;
@@ -91,5 +91,30 @@ module {
   public type StatusResult = {
     #ok : StatusResponse;
     #err : Text;
+  };
+
+    public type TokenMetadata = {
+    #Fungible : {
+      name : Text;
+      symbol : Text;
+      decimals : Nat8;
+      metadata : ?{#Blob : [Nat8]; #Text : Text};
+    };
+    #NonFungible : {
+      name : Text;
+      description : Text;
+      image : Text;
+      metadata : ?{#Blob : [Nat8]; #Text : Text};
+    };
+  };
+
+    public type TxError = {
+    #Unauthorized;
+    #TokenNotFound;
+    #InvalidToken;
+    #Rejected;
+    #TxTooOld;
+    #TxCreatedInFuture;
+    #TxDuplicate;
   };
 }

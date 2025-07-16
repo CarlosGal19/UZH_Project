@@ -3,8 +3,8 @@ import Helpers "Helpers";
 import Array "mo:base/Array";
 import Nat32 "mo:base/Nat32";
 import Result "mo:base/Result";
-import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
+import Time "mo:base/Time";
 
 actor {
 
@@ -14,12 +14,12 @@ actor {
   };
 
   // Principal ID del canister NFT (reemplaza con el ID real)
-  let NFT_CANISTER_ID = "umunu-kh777-77774-qaaca-cai";
+  let NFT_CANISTER_ID = "uzt4z-lp777-77774-qaabq-cai";
   let nftCanister : NFTCanister = actor (NFT_CANISTER_ID);
 
   private stable var nfts : [Types.Nft] = [];
 
-  public shared func addNft(report : Types.Report, _address : Principal) : async Types.ReportResult {
+  public shared func addNft(report : Types.Report) : async Types.ReportResult {
     switch (Helpers.validateReport(report)) {
       case (#ok) {
         try {
@@ -29,6 +29,19 @@ actor {
           switch (tokenResult) {
             case (#ok(tokenId)) {
               Debug.print("NFT created successfully with ID: " # debug_show (tokenId));
+
+              // Crear el nuevo NFT
+              let newNft : Types.Nft = {
+                hash = tokenId;
+                status = "Pending";
+                created_at = Time.now();
+                updated_at = Time.now();
+              };
+
+              // Agregar al arreglo
+              nfts := Array.append(nfts, [newNft]);
+
+              Debug.print("NFT stored in array with hash: " # debug_show (tokenId));
               return #ok(report);
             };
             case (#err(mintError)) {

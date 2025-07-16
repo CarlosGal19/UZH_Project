@@ -4,13 +4,13 @@ import PublicLayout from './Layouts/PublicLayout'
 import PoliceLayout from './Layouts/PoliceLayout.jsx'
 import CivilianLayout from './Layouts/CivilianLayout.jsx'
 import Notfound from './pages/Notfound.jsx'
-import Homepage from './pages/Homepage.js'
+import Homepage from './pages/HomePage.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import PoliceDashboard from './pages/Police/PoliceDashboard.jsx'
 import CreateReport from './pages/Police/CreateReport.jsx'
 import Dashboard from './pages/Civilian/Dashboard.jsx'
-import CivilianViewReport from './pages/Civilian/CivilianViewReport.Jsx'
+import CivilianViewReport from './pages/Civilian/CivilianViewReport.jsx'
 
 const router = createBrowserRouter(
   createRoutesFromElements(
