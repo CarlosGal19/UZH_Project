@@ -11,6 +11,7 @@ actor {
   // Al inicio de tu archivo, después de los imports
   type NFTCanister = actor {
     createToken : (Types.Report) -> async Result.Result<Nat, { #InvalidReport }>;
+    getTokenMetadata : (Nat) -> async ?Types.NFTMetadata;  // Added this method
   };
 
   // Principal ID del canister NFT (reemplaza con el ID real)
@@ -157,4 +158,27 @@ actor {
     };
   };
 
+  public func getAllTokens() : async [Types.NFTMetadata] {
+    var data : [Types.NFTMetadata] = [];
+
+    // Get metadata for all NFTs in the nfts array
+    for (nft in nfts.vals()) {
+      try {
+        switch (await nftCanister.getTokenMetadata(nft.hash)) {
+          case (?metadata) {
+            data := Array.append(data, [metadata]);
+          };
+          case null {
+            // Handle case where metadata doesn't exist
+            Debug.print("No metadata found for token: " # debug_show(nft.hash));
+            Debug.print("No metadata found for token: " # debug_show(nfts));
+          };
+        };
+      } catch (e) {
+        Debug.print("Error fetching metadata for token: " # debug_show(nft.hash));
+      };
+    };
+
+    return data;
+  };
 };

@@ -117,4 +117,14 @@ module {
     #TxCreatedInFuture;
     #TxDuplicate;
   };
+    public type TokenId = Nat;
+
+    public type NFTMetadata = {
+    tokenId : TokenId;
+    owner : Principal;
+    report : Report;
+    createdAt : Int;
+    reportHash : Text;
+    qrImageUrl : Text; // Nueva propiedad para la URL del QR
+  };
 }
